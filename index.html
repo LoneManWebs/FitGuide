@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitness Q&A</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+     body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(45deg, #38b2ac, #4299e1); /* Tailwind green-400 and blue-500 */
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+    }
+
+    /* Animation for the gradient background */
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Ensuring content is centered */
+    .content {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+    }
+    .faq-item {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .faq-item.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .faq-item:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    /* Added to manage modal visibility */
+    .hidden { display: none; }
+    .show { display: block; }
+    .modal {
+      width: 350px;
+      height: 350px;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-green-400 to-blue-500 text-white py-6">
+    <h1 class="text-center text-4xl font-bold">Fitness Q&A</h1>
+    <p class="text-center mt-2">Your go-to guide for fitness, diets, and training!</p>
+  </header>
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
+      <h2 class="text-lg font-semibold">Categories</h2>
+      <ul class="flex space-x-4">
+        <li>
+          <button class="font-medium text-gray-800 dropdown-trigger" data-category="Gym">Gym</button>
+        </li>
+        <li>
+          <button class="font-medium text-gray-800 dropdown-trigger" data-category="Weights">Weights</button>
+        </li>
+        <li>
+          <button class="font-medium text-gray-800 dropdown-trigger" data-category="Diet">Diet</button>
+        </li>
+        <li>
+          <button id="show-all" class="font-medium text-gray-800">Show All</button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Section -->
+  <main class="max-w-4xl mx-auto mt-8 px-4">
+    <div id="faq-container" class="space-y-6">
+      <!-- Placeholder for dynamic FAQs -->
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-6 mt-12">
+    <p class="text-center">Stay Strong. Stay Motivated. Fitness Q&A &copy; 2024</p>
+  </footer>
+  <!-- Open Quiz Button Modal -->
+  <div id="open-quiz-modal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded-lg modal">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Fitness Trivia</h2>
+        <button id="close-open-quiz" class="text-xl font-bold text-gray-600">×</button>
+      </div>
+      <div id="fact-content" class="mb-4">
+        <!-- Random Fitness Fact will appear here -->
+      </div>
+      <div class="mt-4">
+        <button id="start-quiz-btn" class="bg-blue-500 text-white rounded-lg px-4 py-2 w-full">Start Trivia</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Modal -->
+  <div id="quiz-modal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded-lg modal">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Fitness Quiz</h2>
+        <button id="close-quiz" class="text-xl font-bold text-gray-600">×</button>
+      </div>
+      <div id="quiz-content" class="mb-4">
+        <!-- Random Question will appear here -->
+      </div>
+      <div class="mt-4 flex flex-col gap-2" id="answer-options">
+        <!-- Answer Options -->
+      </div>
+      <div class="mt-4 flex justify-between">
+        <button id="submit-answer" class="bg-green-500 text-white rounded-lg px-4 py-2 w-full">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const quizData = [
+      { 
+        question: "What is the best time to go to the gym?", 
+        answers: ["Morning", "Evening", "Any time that fits your schedule"], 
+        correctAnswer: "Any time that fits your schedule"
+      },
+      { 
+        question: "Should I lift heavy or light weights?", 
+        answers: ["Heavy weights for strength", "Light weights for endurance", "It depends on your goal"], 
+        correctAnswer: "It depends on your goal"
+      },
+      { 
+        question: "What should I eat after a workout?", 
+        answers: ["Protein shake", "Banana", "Chicken and rice"], 
+        correctAnswer: "Protein shake"
+      }
+    ];
+
+    const facts = [
+      "Did you know? Drinking water before and after a workout can boost your performance and reduce recovery time!",
+      "Exercise helps increase the production of endorphins, your body’s natural painkillers and mood elevators.",
+      "Strength training doesn’t just build muscle; it also improves bone density and overall health.",
+      "A balanced diet, including protein, fats, and carbs, is crucial for fueling workouts and recovery.",
+      "Stretching after workouts can improve flexibility, reduce muscle tension, and prevent injury."
+    ];
+
+    let currentQuestionIndex = 0;
+
+    const openQuizModal = document.getElementById('open-quiz-modal');
+    const closeOpenQuizButton = document.getElementById('close-open-quiz');
+    const quizModal = document.getElementById('quiz-modal');
+    const quizContent = document.getElementById('quiz-content');
+    const factContent = document.getElementById('fact-content');
+    const submitAnswerButton = document.getElementById('submit-answer');
+    const startQuizButton = document.getElementById('start-quiz-btn');
+    const closeQuizButton = document.getElementById('close-quiz');
+    const answerOptions = document.getElementById('answer-options');
+
+    const displayFact = () => {
+      const randomFact = facts[Math.floor(Math.random() * facts.length)];
+      factContent.innerHTML = `<p class="text-lg">${randomFact}</p><p class="mt-4 text-sm text-gray-600">To learn more, enter this trivia!</p>`;
+    };
+
+    const displayQuestion = () => {
+      const question = quizData[currentQuestionIndex];
+      quizContent.innerHTML = `<p class="text-lg">${question.question}</p>`;
+      
+      // Clear previous options
+      answerOptions.innerHTML = '';
+
+      // Display single choice (radio buttons)
+      question.answers.forEach(answer => {
+        answerOptions.innerHTML += `
+          <div class="flex items-center">
+            <input type="radio" name="answer" class="answer-option" value="${answer}" id="${answer}" />
+            <label for="${answer}" class="ml-2">${answer}</label>
+          </div>
+        `;
+      });
+    };
+
+    const nextQuestion = () => {
+      currentQuestionIndex++;
+      if (currentQuestionIndex >= quizData.length) {
+        currentQuestionIndex = 0; // Restart quiz
+      }
+      displayQuestion();
+    };
+
+    const showOpenQuizModal = () => {
+      openQuizModal.classList.remove('hidden');
+      openQuizModal.classList.add('show');
+      displayFact();
+    };
+
+    const showQuizModal = () => {
+      quizModal.classList.remove('hidden');
+      quizModal.classList.add('show');
+      displayQuestion();
+    };
+
+    const closeModal = (modal) => {
+      modal.classList.remove('show');
+      modal.classList.add('hidden');
+    };
+
+    // Show the open quiz modal after 30 seconds
+    setTimeout(() => {
+      console.log("30 seconds passed! Showing modal...");
+      showOpenQuizModal();
+    }, 30000); // 30 seconds delay
+
+    closeOpenQuizButton.addEventListener('click', () => closeModal(openQuizModal));
+
+    startQuizButton.addEventListener('click', () => {
+      closeModal(openQuizModal); 
+      showQuizModal(); 
+    });
+
+    closeQuizButton.addEventListener('click', () => closeModal(quizModal));
+
+    submitAnswerButton.addEventListener('click', () => {
+      const selectedAnswer = document.querySelector('.answer-option:checked');
+
+      if (!selectedAnswer) {
+        alert("Please select an answer.");
+        return;
+      }
+
+      const selectedValue = selectedAnswer.value;
+      const correctAnswer = quizData[currentQuestionIndex].correctAnswer;
+
+      if (selectedValue === correctAnswer) {
+        alert('Correct answer! 🎉');
+      } else {
+        alert('Incorrect answer. Try again! 😅');
+      }
+
+      nextQuestion(); 
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === openQuizModal) {
+        closeModal(openQuizModal);
+      } else if (e.target === quizModal) {
+        closeModal(quizModal);
+      }
+    });
+    const faqData = {
+      Gym: [
+        { question: "What is the best time to go to the gym?", answer: "The best time is the time you can stick to consistently." },
+        { question: "How often should I work out?", answer: "Aim for 3-5 times per week, focusing on different muscle groups." }
+      ],
+      Weights: [
+        { question: "Should I lift heavy or light weights?", answer: "Heavy weights build strength, while lighter weights improve endurance." },
+        { question: "What are compound exercises?", answer: "Exercises like squats work multiple muscle groups efficiently." }
+      ],
+      Diet: [
+        { question: "What should I eat after a workout?", answer: "A mix of protein and carbs like a protein shake and fruit." },
+        { question: "How important is hydration?", answer: "Hydration is crucial for performance and recovery." }
+      ]
+    };
+
+    const faqContainer = document.getElementById("faq-container");
+    let intervalId;
+
+    // Generate random FAQs
+    const generateRandomFAQs = () => {
+      const categories = Object.keys(faqData);
+      const randomFAQs = [];
+      categories.forEach(category => {
+        const randomIndex = Math.floor(Math.random() * faqData[category].length);
+        randomFAQs.push({ ...faqData[category][randomIndex], category });
+      });
+      return randomFAQs;
+    };
+
+    // Display FAQs with fade-in effect
+    const displayFAQs = (faqs) => {
+      faqContainer.innerHTML = ""; // Clear current FAQs
+      faqs.forEach((faq, index) => {
+        const faqItem = document.createElement("div");
+        faqItem.classList.add("bg-white", "shadow", "rounded-lg", "p-4", "faq-item");
+        faqItem.innerHTML = `
+          <h3 class="text-lg font-semibold">${faq.category}: ${faq.question}</h3>
+          <p class="mt-2 text-gray-600">${faq.answer}</p>
+        `;
+        faqContainer.appendChild(faqItem);
+        setTimeout(() => faqItem.classList.add("active"), index * 100); // Stagger fade-in
+      });
+    };
+
+    // Fade out FAQs
+    const fadeOutFAQs = () => {
+      const faqItems = document.querySelectorAll(".faq-item");
+      faqItems.forEach((item) => {
+        item.classList.remove("active");
+      });
+    };
+
+    // Stop interval when a category is selected
+    const stopRandomFAQs = () => {
+      clearInterval(intervalId);
+    };
+
+    // Handle category selection
+    document.querySelectorAll(".dropdown-trigger").forEach((button) => {
+      button.addEventListener("click", () => {
+        const category = button.dataset.category;
+        stopRandomFAQs(); // Stop random cycling
+        fadeOutFAQs(); // Fade out current FAQs
+        setTimeout(() => {
+          if (faqData[category]) {
+            const categoryFAQs = faqData[category].map((faq) => ({ ...faq, category }));
+            displayFAQs(categoryFAQs); // Display selected category FAQs
+          }
+        }, 800); // Wait for fade-out to complete
+      });
+    });
+
+    // Show all FAQs
+    document.getElementById("show-all").addEventListener("click", () => {
+      stopRandomFAQs(); // Stop random cycling
+      fadeOutFAQs(); // Fade out current FAQs
+      setTimeout(() => {
+        const allFAQs = Object.keys(faqData).flatMap((category) =>
+          faqData[category].map((faq) => ({ ...faq, category }))
+        );
+        displayFAQs(allFAQs); // Display all FAQs
+      }, 800); // Wait for fade-out to complete
+    });
+
+    // Initialize random FAQ generator
+    const initRandomFAQs = () => {
+      const randomFAQs = generateRandomFAQs();
+      displayFAQs(randomFAQs);
+    };
+
+    // Cycle random FAQs every 8 seconds if no category selected
+    const cycleRandomFAQs = () => {
+      intervalId = setInterval(() => {
+        if (!document.querySelector(".dropdown-trigger.active")) {
+          initRandomFAQs();
+        }
+      }, 8000);
+    };
+
+    // On page load
+    window.onload = () => {
+      initRandomFAQs(); // Display initial random FAQs
+      cycleRandomFAQs(); // Start random cycling
+    };
+  </script>
+</body>
+</html>
